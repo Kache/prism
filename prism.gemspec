@@ -1,4 +1,3 @@
-
 lib = File.expand_path("../lib", __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require "prism/version"
@@ -9,9 +8,15 @@ Gem::Specification.new do |spec|
   spec.authors       = ["Kevin Cheng"]
   spec.email         = ["Kache@users.noreply.github.com"]
 
-  spec.summary       = 'TODO: Write a short summary, because RubyGems requires one.'
-  spec.description   = 'TODO: Write a longer description or delete this line.'
-  spec.homepage      = "TODO: Put your gem's website or public repo URL here."
+  spec.summary       = 'A Page Object Model library'
+  spec.description   = <<~DESC
+    Page Object Model library heavily inspired by its namesake, SitePrism.
+    Models web pages as objects composed of recursively hierarchical
+    interactive elements, similar to the principles of Atomic Design.
+
+    About the pattern: https://martinfowler.com/bliki/PageObject.html
+  DESC
+  # spec.homepage      = "TODO: Put your gem's website or public repo URL here."
   spec.license       = "MIT"
 
   # Prevent pushing this gem to RubyGems.org. To allow pushes either set the 'allowed_push_host'
@@ -33,4 +38,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "bundler", "~> 1.16"
   spec.add_development_dependency "minitest", "~> 5.0"
   spec.add_development_dependency "rake", "~> 10.0"
+
+  spec.add_dependency "addressable"
+  spec.add_dependency "watir"
 end
