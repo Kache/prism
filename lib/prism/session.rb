@@ -20,7 +20,11 @@ module Prism
           Selenium::WebDriver::Chrome::Driver === browser.driver &&
           page.loaded?(uri_template_mapping)
         )
-        raise unless ignore_timeout
+        raise PageLoadTimeoutError, "Gave up waiting for page to load, (try tweaking chrome_page_load_timeout)" unless ignore_timeout
+      rescue Net::OpenTimeout
+        raise AutomationError, "Gave up waiting for driver to respond, (try tweaking http_client_open_timeout)"
+      rescue Net::ReadTimeout
+        raise AutomationError, "Gave up waiting for driver to respond, (try tweaking http_client_read_timeout)"
       end
 
       page

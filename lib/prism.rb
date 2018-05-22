@@ -44,4 +44,11 @@ module Prism
       @session_pool
     end
   end
+
+  class Error < StandardError; end
+  class AutomationError < Error; end
+  class PageLoadTimeoutError < Error; end
+  class ElementNotFoundError < Error; end
+  class ExplicitTimeoutError < Error; end
+  class NavigationError < Error; end
 end

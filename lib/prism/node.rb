@@ -21,11 +21,15 @@ module Prism
     def wait_while(timeout: Prism.config.default_timeout, &block)
       node.wait_while(timeout: Util.scale(timeout), &block)
       self
+    rescue Watir::Wait::TimeoutError => ex
+      raise ExplicitTimeoutError, ex.message
     end
 
     def wait_until(timeout: Prism.config.default_timeout, &block)
       node.wait_until(timeout: Util.scale(timeout), &block)
       self
+    rescue Watir::Wait::TimeoutError => ex
+      raise ExplicitTimeoutError, ex.message
     end
 
     def execute_script(script, *objs)
@@ -33,6 +37,8 @@ module Prism
         Prism::Node === el ? el.node : el
       end
       node.execute_script(script, *objects)
+    rescue Watir::Exception::UnknownObjectException => ex
+      raise ElementNotFoundError, ex.message
     end
 
     # [:release, :click, :perform, :send_keys, :double_click, :context_click, :move_to, :move_by, :key_down, :key_up, :click_and_hold, :drag_and_drop, :drag_and_drop_by]
@@ -47,6 +53,17 @@ module Prism
 
     def node
       _node
+    end
+
+    def gracefully
+      yield
+    rescue Watir::Exception::UnknownObjectException => ex
+      raise ElementNotFoundError, ex.message
+    rescue Selenium::WebDriver::Error::UnknownError => ex
+      rgx = /(Element <.*> is not clickable at point \(\d+, \d+\)\. Other element would receive the click: <.*>$)/
+      obscured_err = ex.message[rgx, 1]
+      raise ElementNotFoundError, obscured_err if obscured_err
+      raise
     end
 
     class << self

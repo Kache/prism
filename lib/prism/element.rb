@@ -14,11 +14,17 @@ module Prism
     attr_reader :parent
 
     # expose just a few internal operations
-    delegate(
-      set:   :node,
-      click: :node,
-      hover: :node,
-    )
+    def set(value)
+      gracefully { node.set(value) }
+    end
+
+    def click
+      gracefully { node.click }
+    end
+
+    def hover
+      gracefully { node.hover }
+    end
 
     def visible?(timeout: 0)
       Util.wrap_timeout(timeout) { |t| node.wait_until_present(timeout: t) }
