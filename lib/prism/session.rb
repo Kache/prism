@@ -6,6 +6,17 @@ module Prism
       Prism._session_pool[object_id] = self
     end
 
+    # runs page load validations
+    def load!(page_class, uri_template_mapping = {})
+      page = visit(page_class, uri_template_mapping)
+      if !page.loaded?
+        raise NavigationError, "#{page_class} load_validation failed" if page._validation_failure
+        raise NavigationError, "Failed to load #{page_class}"
+      end
+      page
+    end
+
+    # no page load validations
     def visit(page_class, uri_template_mapping = {})
       visit_uri = page_class.uri(uri_template_mapping)
       visit_uri = app_host + visit_uri if visit_uri.relative? && app_host

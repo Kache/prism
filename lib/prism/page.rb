@@ -21,10 +21,13 @@ module Prism
         extracts == uri_template_mapping.map { |k, v| [k.to_s, v] }.to_h
       end
 
-      url_matches && validate_loading
+      @_validation_failure = url_matches && !validate_loading
+      url_matches && !@_validation_failure
     rescue Selenium::WebDriver::Error::TimeOutError
       false
     end
+
+    attr_reader :_validation_failure
 
     class << self
       attr_reader :url_template
