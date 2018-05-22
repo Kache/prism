@@ -29,6 +29,30 @@ module Prism
 
     attr_reader :_validation_failure
 
+    protected
+
+    def wait_until_redirection(*page_classes, timeout: Prism.config.default_timeout)
+      begin
+        wait_while(timeout: timeout) { loaded? }
+      rescue ExplicitTimeoutError
+        raise NavigationError, "Redirect failure, Page is still loaded"
+      end
+
+      return if page_classes.empty?
+
+      curr_path, page_class = nil, nil
+      begin
+        wait_until(timeout: timeout) do
+          curr_path = session.current_path
+          page_class = page_classes.detect { |pc| pc.loads?(curr_path) }
+        end
+      rescue ExplicitTimeoutError
+        raise NavigationError, "Redirect failure, no Page defined to load #{curr_path}"
+      end
+
+      page_class.new(session)
+    end
+
     class << self
       attr_reader :url_template
 
