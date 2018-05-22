@@ -41,14 +41,6 @@ module Prism
       page
     end
 
-    def current_page
-      Prism.page_for(current_path).new(self)
-    end
-
-    def visit_url(url)
-      visit(Prism.page_for(url))
-    end
-
     def current_path
       current_uri = Addressable::URI.parse(browser.url)
       current_uri = current_uri.omit(:scheme, :authority) if app_host&.host == current_uri.host

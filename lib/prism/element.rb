@@ -56,12 +56,12 @@ module Prism
     def visible?(timeout: 0)
       Util.wrap_timeout(timeout) { |t| first_child.wait_until_present(timeout: t) }
     end
-    alias :any? :visible?
+    alias_method :any?, :visible?
 
     def not_visible?(timeout: 0)
       Util.wrap_timeout(timeout) { |t| first_child.wait_while_present(timeout: t) }
     end
-    alias :empty? :not_visible?
+    alias_method :empty?, :not_visible?
 
     def with(locator)
       Elements.new(parent, @element_class, @locator.merge(locator))
@@ -75,7 +75,7 @@ module Prism
       ele = at(i)
       ele.node.exist? ? ele : nil
     end
-    alias :[] :at!
+    alias_method :[], :at!
 
     def first
       at(0)
@@ -89,13 +89,13 @@ module Prism
       selenium_elements = node.elements(@locator).send(:elements) # trick for speed
       selenium_elements.size
     end
-    alias :count :size
-    alias :length :size
+    alias_method :count, :size
+    alias_method :length, :size
 
     def each
       return enum_for(:each) unless block_given?
 
-      [*0...size].each { |i| yield at(i) }
+      (0...size).each { |i| yield at(i) }
       self
     end
 

@@ -25,12 +25,6 @@ module Prism
       @config
     end
 
-    def page_for(url)
-      page_class = sitemap.each_value.detect { |page_class| page_class.loads?(url) }
-      raise "No page matching `#{url}` defined!" unless page_class
-      page_class
-    end
-
     def default_session
       @session_pool[:default] ||= Prism::Session.new
     end
