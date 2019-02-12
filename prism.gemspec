@@ -40,5 +40,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rake", "~> 10.0"
 
   spec.add_dependency "addressable"
-  spec.add_dependency "watir"
+  spec.add_dependency "watir", "~> 6.11.0"
 end

@@ -18,6 +18,14 @@ module Prism
       gracefully { node.set(value) }
     end
 
+    def select_value(option)
+      gracefully { node.select(option) }
+    end
+
+    def get_select_options
+      gracefully { node.options }
+    end
+
     def click
       gracefully { node.click }
     end
@@ -32,6 +40,21 @@ module Prism
 
     def not_visible?(timeout: 0)
       Util.wrap_timeout(timeout) { |t| node.wait_while_present(timeout: t) }
+    end
+
+    def drag_and_drop_to(destination)
+      target = self
+
+      selenium_actions(target, destination) do |target, destination|
+        # react-beautiful-dnd looks for a click, hold, and small movement to initiate a drag event
+        click_and_hold(target)
+        move_by(0, -5)
+
+        move_to(destination) # now that the drag has started, move to your destination
+
+        release # drop the target at it's destination
+      end
+      sleep 1 # allow for a rerender
     end
 
     private
@@ -56,12 +79,10 @@ module Prism
     def visible?(timeout: 0)
       Util.wrap_timeout(timeout) { |t| first_child.wait_until_present(timeout: t) }
     end
-    alias_method :any?, :visible?
 
     def not_visible?(timeout: 0)
       Util.wrap_timeout(timeout) { |t| first_child.wait_while_present(timeout: t) }
     end
-    alias_method :empty?, :not_visible?
 
     def with(locator)
       Elements.new(parent, @element_class, @locator.merge(locator))

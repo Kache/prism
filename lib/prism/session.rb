@@ -18,13 +18,10 @@ module Prism
 
     # no page load validations
     def visit(page_class, uri_template_mapping = {})
-      visit_uri = page_class.uri(uri_template_mapping)
-      visit_uri = app_host + visit_uri if visit_uri.relative? && app_host
-
       page = page_class.new(self)
 
       begin
-        browser.goto visit_uri.to_s
+        browser.goto visit_uri(page_class, uri_template_mapping).to_s
       rescue Selenium::WebDriver::Error::TimeOutError
         # selenium bug? see page_load timeout set by Prism#init_browser_session
         ignore_timeout = (
@@ -41,6 +38,15 @@ module Prism
       page
     end
 
+    def within_popup(page_klass, uri_template_mapping = {})
+      url = visit_uri(page_klass, uri_template_mapping).to_s
+      popup_page = page_klass.new(self)
+      browser.window(url: url) do # watir will have one unavoidable focus switch
+        yield popup_page
+        browser.driver.close # avoids yet another focus switch when closing window
+      end
+    end
+
     def current_path
       current_uri = Addressable::URI.parse(browser.url)
       current_uri = current_uri.omit(:scheme, :authority) if app_host&.host == current_uri.host
@@ -49,6 +55,14 @@ module Prism
 
     def browser
       @browser ||= init_browser
+    end
+
+    # resets state, should be equivalent to WebDriver quit & reinitialize
+    def reset!
+      @browser&.cookies&.clear
+      @browser&.driver&.local_storage&.clear
+      @browser&.goto 'data:,'
+      @browser
     end
 
     def quit
@@ -61,6 +75,11 @@ module Prism
 
     attr_reader :app_host
 
+    def visit_uri(page_klass, uri_template_mapping)
+      visit_uri = page_klass.uri(uri_template_mapping)
+      app_host + visit_uri if visit_uri.relative? && app_host
+    end
+
     def init_browser
       watir_opts = {
         http_client: Selenium::WebDriver::Remote::Http::Default.new.tap do |client|
@@ -69,9 +88,15 @@ module Prism
         end,
         args: [
           # '--headless', '--disable-gpu', # waitr handles local vs remote variations
-          '--window-size=1280,800',
+          # '--window-size=1024,768', # XGA
+          # '--window-size=1366,768', # WXGA
+          # '--window-size=1280,800', # WXGA/WQXGA
+          '--window-size=1280,720', # 720p
+          # '--window-size=1920,1080', # 1080p
+          # '--enable-logging=stderr --v=1', # enable verbose logging
         ],
       }
+      watir_opts[:args] += Prism.config.other[:chrome_extra_options] if Prism.config.other[:chrome_extra_options]
       watir_opts[:url] = Prism.config.remote_selenium_url if Prism.config.remote_selenium_url
 
       browser = Watir::Browser.new(:chrome, watir_opts)

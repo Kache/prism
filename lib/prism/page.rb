@@ -12,6 +12,14 @@ module Prism
       @parent
     end
 
+    delegate refresh: :node
+
+    def refresh!
+      refresh
+      sleep 5
+      wait_until(&:loaded?)
+    end
+
     def loaded?(uri_template_mapping = {})
       extracts = self.class.url_template.extract(session.current_path)
 
@@ -32,10 +40,21 @@ module Prism
     protected
 
     def wait_until_redirection(*page_classes, timeout: Prism.config.default_timeout)
-      begin
+      # begin
+      #   wait_while(timeout: timeout) { loaded? }
+      # rescue ExplicitTimeoutError
+      #   raise NavigationError, "Redirect failure, Page is still loaded"
+      # end
+      max_tries = 3
+      max_tries.times do
         wait_while(timeout: timeout) { loaded? }
       rescue ExplicitTimeoutError
-        raise NavigationError, "Redirect failure, Page is still loaded"
+        max_tries -= 1
+        if max_tries > 0
+          retry
+        else
+          raise NavigationError, "Redirect failure, Page is still loaded"
+        end
       end
 
       return if page_classes.empty?

@@ -18,15 +18,15 @@ module Prism
 
     protected
 
-    def wait_while(timeout: Prism.config.default_timeout, &block)
-      node.wait_while(timeout: Util.scale(timeout), &block)
+    def wait_while(timeout: Prism.config.default_timeout)
+      node.wait_while(timeout: Util.scale(timeout)) { yield(self) }
       self
     rescue Watir::Wait::TimeoutError => ex
       raise ExplicitTimeoutError, ex.message
     end
 
-    def wait_until(timeout: Prism.config.default_timeout, &block)
-      node.wait_until(timeout: Util.scale(timeout), &block)
+    def wait_until(timeout: Prism.config.default_timeout)
+      node.wait_until(timeout: Util.scale(timeout)) { yield(self) }
       self
     rescue Watir::Wait::TimeoutError => ex
       raise ExplicitTimeoutError, ex.message
@@ -102,7 +102,7 @@ module Prism
         when 2 then locator[find_args.shift] = find_args.shift
         end
 
-        return element_class, locator
+        [element_class, locator]
       end
     end
   end

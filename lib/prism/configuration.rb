@@ -29,6 +29,9 @@ module Prism
     # I think this waits for the `load` JavaScript event
     attr_accessor :chrome_script_timeout
 
+    # plain Hash for misc user settings
+    attr_reader   :other
+
     def initialize
       self.default_timeout      = 4
       @timeout_scaling          = 1.0
@@ -37,6 +40,7 @@ module Prism
       @http_client_read_timeout = 8
       @chrome_page_load_timeout = 4
       @chrome_script_timeout    = 16
+      @other                    = {}
     end
 
     def app_host=(url)
