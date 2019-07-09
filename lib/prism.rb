@@ -3,6 +3,7 @@ require 'addressable'
 
 require 'prism/version'
 require 'prism/configuration'
+require 'prism/wait'
 require 'prism/session'
 require 'prism/node'
 require 'prism/page'
@@ -45,4 +46,5 @@ module Prism
   class ElementNotFoundError < Error; end
   class ExplicitTimeoutError < Error; end
   class NavigationError < Error; end
+  class NestedWaitError < Error; end
 end

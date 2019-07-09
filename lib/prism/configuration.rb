@@ -33,13 +33,15 @@ module Prism
     attr_reader   :other
 
     def initialize
+      # NOTE: Do not change these setting
+      # Change configurations.local.yml for any local override
       self.default_timeout      = 4
       @timeout_scaling          = 1.0
       @timeout_scaling_exponent = 1.0
       @http_client_open_timeout = 1
       @http_client_read_timeout = 8
       @chrome_page_load_timeout = 4
-      @chrome_script_timeout    = 16
+      @chrome_script_timeout    = 30
       @other                    = {}
     end
 
@@ -57,22 +59,6 @@ module Prism
       uri = URI.parse(url)
       raise ArgumentError unless uri.hierarchical? && uri.absolute?
       Addressable::URI.parse(url)
-    end
-  end
-
-  module Util
-    class << self
-      def scale(timeout)
-        exponent = Prism.config.timeout_scaling_exponent
-        Prism.config.timeout_scaling * timeout**exponent
-      end
-
-      def wrap_timeout(timeout)
-        yield scale(timeout)
-        true
-      rescue Watir::Wait::TimeoutError, Selenium::WebDriver::Error::StaleElementReferenceError
-        false
-      end
     end
   end
 end

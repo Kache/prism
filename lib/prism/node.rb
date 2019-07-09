@@ -7,10 +7,13 @@ module Prism
       @parent = parent
     end
 
-    delegate(
-      html: :node,
-      text: :node,
-    )
+    def html
+      gracefully { node.html }
+    end
+
+    def text
+      gracefully { node.text }
+    end
 
     def page
       @parent.page
@@ -19,18 +22,29 @@ module Prism
     protected
 
     def wait_while(timeout: Prism.config.default_timeout)
-      node.wait_while(timeout: Util.scale(timeout)) { yield(self) }
+      page.session._wait.while(node, timeout: timeout) { yield(self) }
       self
-    rescue Watir::Wait::TimeoutError => ex
-      raise ExplicitTimeoutError, ex.message
     end
 
     def wait_until(timeout: Prism.config.default_timeout)
-      node.wait_until(timeout: Util.scale(timeout)) { yield(self) }
+      page.session._wait.until(node, timeout: timeout) { yield(self) }
       self
-    rescue Watir::Wait::TimeoutError => ex
-      raise ExplicitTimeoutError, ex.message
     end
+
+    # needs to be undef_method for Pages
+    def attribute_value(attribute_name)
+      gracefully { node.attribute_value(attribute_name) }
+    end
+
+    def node
+      _node
+    end
+
+    def ensured_node!
+      _ensured_node!
+    end
+
+    private
 
     def execute_script(script, *objs)
       objects = objs.map do |el|
@@ -51,12 +65,11 @@ module Prism
       selenium_action_builder.perform
     end
 
-    def node
-      _node
-    end
-
+    # Use to wrap interaction calls that require existance
+    # For example, element-context clicking, typing, reading DOM, etc
+    # And to give messaging to errors from Watir, Selenium, etc
     def gracefully
-      yield
+      yield ensured_node!
     rescue Watir::Exception::UnknownObjectException => ex
       raise ElementNotFoundError, ex.message
     rescue Selenium::WebDriver::Error::UnknownError => ex
@@ -92,7 +105,7 @@ module Prism
           element_class = anon_class_def ? Class.new(Element, &anon_class_def) : Element
           find_args = args
         else
-          raise ArgumentError 'Provide an Element subclass, an anonymous block definition, or neither, but not both'
+          raise ArgumentError, 'Provide an Element subclass, an anonymous block definition, or neither, but not both'
         end
 
         locator = Hash === find_args.last ? find_args.pop : {}
