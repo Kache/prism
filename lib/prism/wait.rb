@@ -17,7 +17,7 @@ module Prism
     end
 
     def visible?(node, timeout:)
-      allow_nesting_if(timeout.zero?) { node.wait_until_present(timeout: scale(timeout)) }
+      allow_nesting_if(timeout.zero?) { node.wait_until_present(timeout: scale(timeout), &:present?) }
       true
     rescue Watir::Wait::TimeoutError, Selenium::WebDriver::Error::StaleElementReferenceError
       false

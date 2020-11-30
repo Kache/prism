@@ -50,39 +50,6 @@ module Prism
     # don't respond to, but still allow Pages to call it on Elements
     undef_method :attribute_value
 
-    # Wait after taking an action that redirects, example:
-    #
-    #     def action_that_redirects
-    #       link_btn.click                   # triggers redirection
-    #       wait_until_redirection(FooPage)  # wait for a FooPage to load and return instance
-    #     end
-    #
-    # Usages:
-    #
-    #     wait_until_redirection(FooPage, BarPage) # when redirection could land on one of many pages
-    #     wait_until_redirection(FooPage, validate_load: false) # skip load validation on destination
-    def wait_until_redirection(*page_classes, validate_load: true, timeout: Prism.config.default_timeout)
-      still_loaded, curr_path, page_class = true, nil, nil
-      begin
-        wait_until(timeout: timeout) do
-          still_loaded &&= loaded?(timeout: 0)
-          return if !still_loaded && page_classes.empty?
-
-          if !still_loaded
-            curr_path = session.current_path
-            page_class = page_classes.detect { |pc| pc.loads?(curr_path) }
-          end
-        end
-      rescue ExplicitTimeoutError
-        reason = still_loaded ? 'current Page is still loaded' : "no Page matches destination #{curr_path}"
-        raise NavigationError, "Redirect failure, #{reason}"
-      end
-
-      page_object = page_class.new(session)
-      page_object.loaded?(timeout: timeout) if validate_load
-      page_object
-    end
-
     class << self
       def set_url(url_template, url_processor = nil)
         url_template = Addressable::Template.new(url_template)

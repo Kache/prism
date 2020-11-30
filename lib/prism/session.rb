@@ -25,7 +25,7 @@ module Prism
 
       begin
         browser.goto visit_uri(page_class, uri_vars).to_s
-      rescue Selenium::WebDriver::Error::TimeOutError
+      rescue Selenium::WebDriver::Error::TimeoutError
         # selenium bug? see page_load timeout set by Prism#init_browser_session
         ignore_timeout = (
           Selenium::WebDriver::Chrome::Driver === browser.driver &&
@@ -53,8 +53,10 @@ module Prism
     def current_path
       current_uri = Addressable::URI.parse(browser.url)
       is_app_url = app_host&.host == current_uri.host && app_host&.port == current_uri.port
-      current_uri = current_uri.omit(:scheme, :authority) if is_app_url # return relative url for the "main app"
-      current_uri
+      # current_uri = current_uri.omit(:scheme, :authority) if is_app_url # return relative url for the "main app"
+      # current_uri
+
+      current_uri.omit(:scheme, :authority)
     end
 
     # Usage: To call HTTP Get/POST request using browser cookies
@@ -110,12 +112,15 @@ module Prism
           '--window-size=1280,720', # 720p
           # '--window-size=1920,1080', # 1080p
           # '--enable-logging=stderr --v=1', # enable verbose logging
+          # misc options from https://stackoverflow.com/questions/48450594
+          '--disable-browser-side-navigation',
+          '--disable-gpu',
         ],
         options: {
             prefs: {
               download: {
                   prompt_for_download: false,
-                  default_directory: File.expand_path(Prism.config.other[:file_download_path])
+                  default_directory: Prism.config.other.fetch(:file_download_path, nil)&.then { |p| File.expand_path(p) },
               }
             }
         },

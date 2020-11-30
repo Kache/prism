@@ -36,6 +36,39 @@ module Prism
       gracefully { node.attribute_value(attribute_name) }
     end
 
+    # Wait after taking an action that redirects, example:
+    #
+    #     def action_that_redirects
+    #       link_btn.click                   # triggers redirection
+    #       wait_until_redirection(FooPage)  # wait for a FooPage to load and return instance
+    #     end
+    #
+    # Usages:
+    #
+    #     wait_until_redirection(FooPage, BarPage) # when redirection could land on one of many pages
+    #     wait_until_redirection(FooPage, validate_load: false) # skip load validation on destination
+    def wait_until_redirection(*page_classes, validate_load: true, timeout: Prism.config.default_timeout)
+      still_loaded, curr_path, page_class = true, nil, nil
+      begin
+        wait_until(timeout: timeout) do
+          still_loaded &&= page.loaded?(timeout: 0)
+          return if !still_loaded && page_classes.empty?
+
+          if !still_loaded
+            curr_path = page.session.current_path
+            page_class = page_classes.detect { |pc| pc.loads?(curr_path) }
+          end
+        end
+      rescue ExplicitTimeoutError
+        reason = still_loaded ? 'current Page is still loaded' : "no Page matches destination #{curr_path}"
+        raise NavigationError, "Redirect failure, #{reason}"
+      end
+
+      page_object = page_class.new(page.session)
+      page_object.loaded?(timeout: timeout) if validate_load
+      page_object
+    end
+
     def node
       _node
     end
@@ -70,13 +103,15 @@ module Prism
     # And to give messaging to errors from Watir, Selenium, etc
     def gracefully
       yield ensured_node!
-    rescue Watir::Exception::UnknownObjectException => ex
-      raise ElementNotFoundError, ex.message
-    rescue Selenium::WebDriver::Error::UnknownError => ex
+    rescue Watir::Exception::UnknownObjectException => e
+      raise ElementNotFoundError, e.message
+    rescue Selenium::WebDriver::Error::UnknownError => e
       rgx = /(Element <.*> is not clickable at point \(\d+, \d+\)\. Other element would receive the click: <.*>$)/
-      obscured_err = ex.message[rgx, 1]
+      obscured_err = e.message[rgx, 1]
       raise ElementNotFoundError, obscured_err if obscured_err
       raise
+    rescue Selenium::WebDriver::Error::TimeoutError => e
+      raise 'Timed out waiting for driver to respond'
     end
 
     class << self

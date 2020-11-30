@@ -1,5 +1,7 @@
+require 'uri'
 require 'watir'
 require 'addressable'
+require 'selenium-webdriver'
 
 require 'prism/version'
 require 'prism/configuration'
@@ -19,7 +21,7 @@ module Prism
 
     def config
       @config ||= begin
-        Selenium::WebDriver.logger.level = Selenium::WebDriver::Logger::WARN
+        # Selenium::WebDriver.logger.level = Selenium::WebDriver::Logger::WARN
         Prism::Configuration.new
       end
       yield @config if block_given?
